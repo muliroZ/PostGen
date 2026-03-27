@@ -1,6 +1,6 @@
 # PostGen - Gerador de Posts para LinkedIn
 
-<div>
+<div align="center">
     <img src="./assets/meet_postgen.png" alt="Conheça o PostGen!">
 </div>
 
