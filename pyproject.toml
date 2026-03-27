@@ -1,0 +1,10 @@
+[project]
+name = "postgen"
+version = "0.1.0"
+description = "Post generator using Google Generative AI"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-genai",
+    "python-dotenv"
+]
