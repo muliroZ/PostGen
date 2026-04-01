@@ -61,6 +61,34 @@ def test_generate_post_success(mock_client_class):
     mock_client_instance.models.generate_content.assert_called_once()
 
 @patch("core.post_gen.genai.Client")
+def test_generate_post_with_file_context(mock_client_class):
+    """
+    Testa a geração de postagem garantindo que o conteúdo do ficheiro é injetado no prompt.
+    """
+    mock_response = MagicMock()
+    mock_response.text = "Post baseado no código fornecido."
+    
+    mock_client_instance = MagicMock()
+    mock_client_instance.models.generate_content.return_value = mock_response
+    mock_client_class.return_value = mock_client_instance
+
+    topic_mock = "Refatoração de Classe"
+    file_context_mock = "public class Example { private int id; }"
+
+    with patch.dict(os.environ, {"GEMINI_API_KEY": "chave-falsa-teste"}):
+        resultado = generate_post(topic=topic_mock, file_context=file_context_mock)
+        
+    assert resultado == "Post baseado no código fornecido."
+    
+    chamada_api = mock_client_instance.models.generate_content.call_args
+    argumentos = chamada_api.kwargs
+    prompt_enviado = argumentos.get("contents", "")
+    
+    assert topic_mock in prompt_enviado
+    assert file_context_mock in prompt_enviado
+    assert "Utilize o seguinte trecho de código" in prompt_enviado
+
+@patch("core.post_gen.genai.Client")
 def test_generate_post_api_error(mock_client_class):
     """
     Testa o comportamento da função quando a API lança uma exceção.

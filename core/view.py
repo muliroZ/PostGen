@@ -1,5 +1,7 @@
 import customtkinter as ctk
+from customtkinter import filedialog
 from post_gen import generate_post, save_on_history
+import threading
 
 ctk.set_default_color_theme("green")
 ctk.set_appearance_mode("System")
@@ -8,7 +10,7 @@ class PostGen(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("PostGen")
-        self.geometry("500x650+710+220")
+        self.geometry("500x700+710+220")
 
         self.title_label = ctk.CTkLabel(self, text="PostGen", font=("Inter", 24, "bold"))
         self.title_label.pack(pady=10, fill="both")
@@ -25,6 +27,20 @@ class PostGen(ctk.CTk):
         self.entry_input = ctk.CTkEntry(self, placeholder_text="> ", font=("Inter", 16), width=280)
         self.entry_input.pack(pady=5)
         self.entry_input.bind("<Control-v>", lambda e: None)
+
+        self.file_context_content = None
+
+        self.attach_btn = ctk.CTkButton(
+            self, 
+            text="Anexar código/arquivo", 
+            fg_color="#444444", 
+            font=("Inter", 12, "bold"),
+            command=None
+            )
+        self.attach_btn.pack(pady=5)
+
+        self.file_label = ctk.CTkLabel(self, text="Nenhum contexto anexado", font=("Inter", 11), text_color="gray")
+        self.file_label.pack()
 
         self.generate_btn = ctk.CTkButton(self, text="Gerar Post", font=("Inter", 14, "bold"), command=self.generate_action)
         self.generate_btn.pack(pady=5)
@@ -44,23 +60,54 @@ class PostGen(ctk.CTk):
 
         self.current_post = ""
 
+    def attach_file_action(self):
+        filepath = filedialog.askopenfilename(
+            title="Selecione um arquivo de contexto",
+            filetypes=[
+                ("Arquivos de código/configuração", "*.java *.xml *.yml *.yaml *.properties *.md *.txt *.py *.sql"),
+                ("Todos os arquivos", "*.*")
+            ]
+        )
+
+        if filepath:
+            try:
+                with open(filepath, "r", encoding="utf-8") as f:
+                    self.file_context_content = f.read()
+                
+                filename = filepath.split("/")[-1]
+                self.file_label.configure(text=f"Anexado: {filename}", text_color="#00fa9a")
+            except Exception as e:
+                self.file_label.configure(text="Erro ao ler arquivo", text_color="red")
+                self.file_context_content = None
+
     def generate_action(self):
         topic = self.entry_input.get()
         if not topic:
             return
-        
-        self.content_panel.delete("0.0", ctk.END)
-        self.content_panel.insert("0.0", "Gerando post, aguarde...")
-        self.content_panel.update()
 
-        self.current_post = generate_post(topic)
-        if self.current_post is None:
-            self.content_panel.delete("0.0", ctk.END)
-            self.content_panel.insert("0.0", "Erro ao criar post. Tente novamente. (caso persista, verifique sua chave do Gemini)")
-            return
+        self.generate_btn.configure(state="disabled", text="Gerando post, aguarde...")
 
         self.content_panel.delete("0.0", ctk.END)
-        self.content_panel.insert("0.0", self.current_post)
+        self.content_panel.insert("0.0", "Conectando com a API do Gemini. Isso pode levar alguns segundos...")
+
+        thread = threading.Thread(target=self._process_post_in_background, args=(topic), daemon=True)
+        thread.start()
+
+    def _process_post_in_background(self, topic):
+        result = generate_post(topic, self.file_context_content)
+        self.after(0, self._update_ui_with_result, result)
+
+    def _update_ui_with_result(self, result):
+        self.current_post = result
+        self.content_panel.delete("0.0", ctk.END)
+
+        if self.current_post is None or "Erro na API" in self.current_post:
+            error_msg = self.current_post if self.current_post else "Erro ao criar post. verifique sua chave do Gemini."
+            self.content_panel.insert("0.0", error_msg)
+        else:
+            self.content_panel.insert("0.0", self.current_post)
+
+        self.generate_btn.configure(state="normal", text="Gerar Post")
 
     def save_action(self):
         topic = self.entry_input.get()
