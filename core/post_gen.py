@@ -27,9 +27,14 @@ def save_on_history(theme: str, content: str) -> str:
 
     return file_path
 
-def generate_post(topic: str) -> str | None:
+def generate_post(topic: str, file_context: str | None = None) -> str | None:
     client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     tone = "pragmático, técnico e direto ao ponto, não tão formal, com uma pitada de entusiasmo" # defina como quiser
+
+    prompt = f"Crie uma postagem para o LinkedIn sobre o seguinte tópico (seguindo as diretrizes): {topic}"
+
+    if file_context:
+        prompt += f"\n\nUtilize o seguinte trecho de código ou arquivo de configuração como contexto prático para basear a sua explicação:\n\n```\n{file_context}\n```"
 
     try:
         response = client.models.generate_content(
@@ -54,7 +59,7 @@ def generate_post(topic: str) -> str | None:
                     - Lembre-se, você é um Estudante/Júnior, por isso não deve impor verdades absolutas ou soluções "perfeitas"
                 """
             ),
-            contents=f"Crie uma postagem para o LinkedIn sobre o seguinte tópico (seguindo as diretrizes): {topic}"
+            contents=prompt
         )
         return response.text
     except Exception as e:
