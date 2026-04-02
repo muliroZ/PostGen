@@ -6,7 +6,7 @@
 # ]
 # ///
 
-from post_gen import generate_post, save_on_history
+from core.post_gen import generate_post, save_on_history
 import os
 
 def run_cli():
