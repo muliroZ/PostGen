@@ -20,6 +20,8 @@ WRAPPER_PATH="/usr/local/bin/post-gen"
 
 echo "Será solicitada a senha de administrador (sudo) para instalar o comando globalmente em $WRAPPER_PATH"
 
+sudo rm /usr/local/bin/post-gen 2>/dev/null
+
 sudo tee $WRAPPER_PATH > /dev/null <<EOF
 #!/bin/bash
 cd $PROJECT_DIR && uv run core/cli.py "\$@"
