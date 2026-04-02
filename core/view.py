@@ -1,7 +1,13 @@
+import os
+os.environ["GDK_BACKEND"] = "x11"
+os.environ["XMODIFIERS"] = "@im=none"
+
 import customtkinter as ctk
 from customtkinter import filedialog
 from post_gen import generate_post, save_on_history
 import threading
+import queue
+import asyncio
 
 ctk.set_default_color_theme("green")
 ctk.set_appearance_mode("System")
@@ -29,13 +35,14 @@ class PostGen(ctk.CTk):
         self.entry_input.bind("<Control-v>", lambda e: None)
 
         self.file_context_content = None
+        self.result_queue = queue.Queue()
 
         self.attach_btn = ctk.CTkButton(
             self, 
             text="Anexar código/arquivo", 
             fg_color="#444444", 
             font=("Inter", 12, "bold"),
-            command=None
+            command=self.attach_file_action
             )
         self.attach_btn.pack(pady=5)
 
@@ -90,12 +97,27 @@ class PostGen(ctk.CTk):
         self.content_panel.delete("0.0", ctk.END)
         self.content_panel.insert("0.0", "Conectando com a API do Gemini. Isso pode levar alguns segundos...")
 
-        thread = threading.Thread(target=self._process_post_in_background, args=(topic), daemon=True)
+        thread = threading.Thread(target=self._process_post_in_background, args=(topic,), daemon=True)
         thread.start()
 
+        self.after(100, self._check_queue)
+
+    def _check_queue(self):
+        try:
+            result = self.result_queue.get_nowait()
+            self._update_ui_with_result(result)
+        except queue.Empty:
+            self.after(100, self._check_queue)
+
     def _process_post_in_background(self, topic):
-        result = generate_post(topic, self.file_context_content)
-        self.after(0, self._update_ui_with_result, result)
+        try:
+            asyncio.set_event_loop(asyncio.new_event_loop())
+            result = generate_post(topic, self.file_context_content)
+            self.result_queue.put(result)
+        except Exception as e:
+            import traceback
+            error_msg = f"[ERRO FATAL] Erro na Thread: {e}\n\n{traceback.format_exc()}"
+            self.result_queue.put(error_msg)
 
     def _update_ui_with_result(self, result):
         self.current_post = result
