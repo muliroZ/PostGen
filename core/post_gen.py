@@ -5,38 +5,51 @@ from zoneinfo import ZoneInfo
 import os
 import shutil
 
-load_dotenv()
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+env_path = os.path.join(root_dir, ".env")
+
+load_dotenv(dotenv_path=env_path)
 
 dir_history_path: str | None = os.getenv("DIR_HISTORY_PATH") # opcional, adicione "DIR_HISTORY_PATH" no seu .env
 
 def save_on_history(theme: str, content: str) -> str:
     tz = ZoneInfo("America/Sao_Paulo")
-    now = datetime.now(tz=tz).strftime("%Y-%m-%d_%H-%M")
+    now = datetime.now(tz=tz).strftime("%Y-%m-%d_%H-%M-%S")
 
     file_path = f"post_{now}.md"
 
     with open(file=file_path, mode="w", encoding="utf-8") as f:
-        f.write(f"# Post para LinkedIn - {datetime.now(tz=tz).strftime("%d-%m-%Y")}\n")
+        f.write(f"# Post para LinkedIn - {datetime.now(tz=tz).strftime('%d-%m-%Y')}\n")
         f.write(f"**Tema sugerido:** {theme}\n\n")
         f.write("---\n\n")
         f.write(content)
 
     if dir_history_path is not None:
-        shutil.move(file_path, dir_history_path)
-        return f"{dir_history_path}/{file_path}"
+        destination_path = os.path.join(dir_history_path, file_path)
+
+        if os.path.exists(destination_path):
+            os.remove(destination_path)
+
+        shutil.move(file_path, destination_path)
+        return destination_path
 
     return file_path
 
 def generate_post(topic: str, file_context: str | None = None) -> str | None:
-    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-    tone = "pragmático, técnico e direto ao ponto, não tão formal, com uma pitada de entusiasmo" # defina como quiser
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return "Erro na API: Chave GEMINI_API_KEY não encontrada. Verifique o ficheiro .env na raiz do projeto."
 
+    tone = "pragmático, técnico e direto ao ponto, não tão formal, com uma pitada de entusiasmo" # defina como quiser
     prompt = f"Crie uma postagem para o LinkedIn sobre o seguinte tópico (seguindo as diretrizes): {topic}"
 
     if file_context:
         prompt += f"\n\nUtilize o seguinte trecho de código ou arquivo de configuração como contexto prático para basear a sua explicação:\n\n```\n{file_context}\n```"
 
     try:
+        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             config=genai.types.GenerateContentConfig(

@@ -6,15 +6,16 @@
 # ]
 # ///
 
-from post_gen import generate_post, save_on_history
+from core.post_gen import generate_post, save_on_history
 import os
 
 def run_cli():
     topic = input("Sobre qual assunto vamos falar hoje?\n> ").strip()
     if not topic:
         print("Operação cancelada. Nenhum assunto fornecido.")
+        return
 
-    print("\n[OPCIONAL] Anexar arquico de código ou configuração como contexto?")
+    print("\n[OPCIONAL] Anexar arquivo de código ou configuração como contexto?")
     print("Dica: Pode arrastar o arquivo para o terminal ou digitar o caminho.")
     file_path_input = input("Caminho do arquivo (ou pressione Enter para pular):\n> ").strip()
 
