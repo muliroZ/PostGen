@@ -25,13 +25,13 @@ def run_cli():
 
     topic = Prompt.ask("[bold white]Sobre qual assunto vamos falar hoje?\n[/bold white]").strip()
     if not topic:
-        console.print("[bold red]Operação cancelada. Nenhum assunto fornecido.[/bold red]")
+        console.print("[bold red][SISTEMA] Operação cancelada. Nenhum assunto fornecido.[/bold red]")
         return
 
     console.print("\n[dim][OPCIONAL] Anexar arquivo de código ou configuração como contexto?[/dim]")
     console.print("[dim]Dica: Pode arrastar o arquivo para o terminal ou digitar o caminho.[/dim]")
 
-    file_path_input = Prompt.ask("[bold white]Caminho do arquivo (ou pressione Enter para pular):\n> [/bold white]").strip()
+    file_path_input = Prompt.ask("[bold white]Caminho do arquivo (ou pressione Enter para pular)[/bold white]").strip()
 
     file_context_content = None
 
@@ -69,5 +69,5 @@ def run_cli():
 if __name__ == "__main__":
     try:
         run_cli()
-    except Exception:
+    except (Exception, KeyboardInterrupt):
         console.print("\n[bold yellow][SISTEMA] Encerrando PostGen...[/bold yellow]")

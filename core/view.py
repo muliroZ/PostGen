@@ -7,12 +7,14 @@ sys.path.insert(0, project_root)
 os.environ["GDK_BACKEND"] = "x11"
 os.environ["XMODIFIERS"] = "@im=none"
 
+import tkinter as tk
 import customtkinter as ctk
 from customtkinter import filedialog
 from core.post_gen import generate_post, save_on_history
 import threading
 import queue
 import asyncio
+import platform
 
 ctk.set_default_color_theme("green")
 ctk.set_appearance_mode("System")
@@ -22,6 +24,15 @@ class PostGen(ctk.CTk):
         super().__init__()
         self.title("PostGen")
         self.geometry("500x700+710+220")
+        
+        if platform.system() == "Windows":
+            self.iconbitmap(os.path.join(project_root, "assets", "logo_postgen.ico"))
+        else:
+            try:
+                logo = tk.PhotoImage(file=os.path.join(project_root, "assets", "logo_postgen.png"))
+                self.wm_iconphoto(False, logo)
+            except Exception:
+                pass
 
         self.title_label = ctk.CTkLabel(self, text="PostGen", font=("Inter", 24, "bold"))
         self.title_label.pack(pady=10, fill="both")
@@ -88,7 +99,7 @@ class PostGen(ctk.CTk):
                 
                 filename = filepath.split("/")[-1]
                 self.file_label.configure(text=f"Anexado: {filename}", text_color="#00fa9a")
-            except Exception as e:
+            except Exception:
                 self.file_label.configure(text="Erro ao ler arquivo", text_color="red")
                 self.file_context_content = None
 
