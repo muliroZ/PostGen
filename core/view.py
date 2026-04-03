@@ -1,10 +1,15 @@
 import os
+import sys
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
 os.environ["GDK_BACKEND"] = "x11"
 os.environ["XMODIFIERS"] = "@im=none"
 
 import customtkinter as ctk
 from customtkinter import filedialog
-from post_gen import generate_post, save_on_history
+from core.post_gen import generate_post, save_on_history
 import threading
 import queue
 import asyncio

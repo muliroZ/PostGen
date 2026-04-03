@@ -6,8 +6,13 @@
 # ]
 # ///
 
-from core.post_gen import generate_post, save_on_history
 import os
+import sys
+
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
+
+from core.post_gen import generate_post, save_on_history
 
 def run_cli():
     topic = input("Sobre qual assunto vamos falar hoje?\n> ").strip()
