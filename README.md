@@ -1,7 +1,7 @@
 # PostGen - Gerador de Posts para LinkedIn
 
 <div align="center">
-    <img src="./assets/meet_postgen.png" alt="Conheça o PostGen!">
+    <img src="./assets/meet_postgen_2.png" alt="Conheça o PostGen!">
 </div>
 
 Uma ferramenta modular desenvolvida em Python para automatizar a criação de conteúdos técnicos para o LinkedIn, utilizando a API do Google Gemini.

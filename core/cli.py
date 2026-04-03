@@ -3,6 +3,7 @@
 # dependencies = [
 #   "google-genai",
 #   "python-dotenv",
+#   "rich",
 # ]
 # ///
 
@@ -13,16 +14,24 @@ project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, project_root)
 
 from core.post_gen import generate_post, save_on_history
+from rich.console import Console
+from rich.panel import Panel
+from rich.prompt import Prompt
+
+console = Console()
 
 def run_cli():
-    topic = input("Sobre qual assunto vamos falar hoje?\n> ").strip()
+    console.print(Panel.fit("[bold #00fa9a]PostGen[/bold #00fa9a]", border_style="#00fa9a"))
+
+    topic = Prompt.ask("[bold white]Sobre qual assunto vamos falar hoje?\n[/bold white]").strip()
     if not topic:
-        print("Operação cancelada. Nenhum assunto fornecido.")
+        console.print("[bold red][SISTEMA] Operação cancelada. Nenhum assunto fornecido.[/bold red]")
         return
 
-    print("\n[OPCIONAL] Anexar arquivo de código ou configuração como contexto?")
-    print("Dica: Pode arrastar o arquivo para o terminal ou digitar o caminho.")
-    file_path_input = input("Caminho do arquivo (ou pressione Enter para pular):\n> ").strip()
+    console.print("\n[dim][OPCIONAL] Anexar arquivo de código ou configuração como contexto?[/dim]")
+    console.print("[dim]Dica: Pode arrastar o arquivo para o terminal ou digitar o caminho.[/dim]")
+
+    file_path_input = Prompt.ask("[bold white]Caminho do arquivo (ou pressione Enter para pular)[/bold white]").strip()
 
     file_context_content = None
 
@@ -34,26 +43,31 @@ def run_cli():
                 with open(clean_path, "r", encoding="utf-8") as f:
                     file_context_content = f.read()
                 filename = os.path.basename(clean_path)
-                print(f"[SISTEMA] Arquivo '{filename}' carregado com sucesso.")
+                console.print(f"[bold green][SISTEMA] Arquivo '{filename}' carregado com sucesso.[/bold green]")
             except Exception as e:
-                print(f"[ERRO] Falha ao ler o arquivo: {e}")
-                print("[SISTEMA] Prosseguindo sem o contexto do arquivo.")
+                print(f"[bold red][ERRO] Falha ao ler o arquivo: {e}[/bold red]")
+                print("[yellow][SISTEMA] Prosseguindo sem o contexto do arquivo.[/yellow]")
         else:
-            print("[AVISO] Arquivo não encontrado. Prosseguindo sem o contexto do arquivo.")
+            print("[bold yellow][AVISO] Arquivo não encontrado. Prosseguindo sem o contexto do arquivo.[/bold yellow]")
 
-    print("\nConectando com a API do Gemini. Aguarde...")
-
-    post = generate_post(topic, file_context_content)
+    with console.status("\n[bold cyan]Conectando com a API do Gemini. Aguarde...[/bold cyan]", spinner="dots"):
+        post = generate_post(topic, file_context_content)
+    
     if post is None or "Erro na API" in post:
-        print(f"\n[ERRO FATAL] {post}")
+        console.print(f"\n[bold red][ERRO FATAL][/bold red] {post}")
         return
     
-    print("\n" + "=" * 40 + "\n" + post + "\n" + "=" * 40 + "\n")
+    console.print()
+    console.print(Panel(post, title="[bold #00fa9a]Post Gerado[/bold #00fa9a]", border_style="#00fa9a", expand=False))
+    console.print()
 
-    option = input("Deseja salvar esse post no histórico (S/N): ").strip().lower()
+    option = Prompt.ask("[bold white]Deseja salvar esse post no histórico?[/bold white]", choices=["s", "n"], default="n", case_sensitive=False)
     if option == 's':
         path = save_on_history(topic, post)
-        print(f"[SISTEMA] Post salvo: {path}")
+        console.print(f"[bold green][SISTEMA] Post salvo: {path}[/bold green]")
 
 if __name__ == "__main__":
-    run_cli()
+    try:
+        run_cli()
+    except (Exception, KeyboardInterrupt):
+        console.print("\n[bold yellow][SISTEMA] Encerrando PostGen...[/bold yellow]")
