@@ -160,7 +160,7 @@ def test_run_cli_empty_topic(capsys):
 @patch("core.cli.generate_post")
 def test_run_cli_success_no_file(mock_generate, capsys):
     """
-    Testa o fluxo padrão: Tópico válido, sem ficheiro de contexto, recusando salvar.
+    Testa o fluxo padrão da CLI com a interface Rich.
     """
     mock_generate.return_value = "Texto do post gerado pelo mock."
     
@@ -171,11 +171,11 @@ def test_run_cli_success_no_file(mock_generate, capsys):
         
     captured = capsys.readouterr()
     
-    # Verificações visuais no terminal
-    assert "Conectando com a API do Gemini. Aguarde..." in captured.out
+    # Verificações adaptadas para Rich
+    assert "PostGen" in captured.out
+    assert "Sobre qual assunto vamos falar hoje?" in captured.out
     assert "Texto do post gerado pelo mock." in captured.out
-    
-    # Garante que a função central foi chamada com os argumentos corretos
+        
     mock_generate.assert_called_once_with("Boas práticas em Java", None)
 
 # Teste 09 - Fluxo completo do CLI
